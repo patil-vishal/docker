@@ -1,0 +1,42 @@
+FROM centos:centos6
+MAINTAINER lreeder
+ 
+#Helpful utils, but only sudo is required
+RUN yum -y install tar
+RUN yum -y install vim
+RUN yum -y install nc
+RUN yum -y install sudo
+RUN yum -y install gcc
+
+
+#### Install MongoDB
+RUN echo -e "[mongodb]\nname=MongoDB Repository\nbaseurl=http://repo.mongodb.org/yum/redhat/\$releasever/mongodb-org/3.2/x86_64/\ngpgcheck=0\nenabled=1" > /etc/yum.repos.d/mongodb.repo && yum clean all
+RUN yum install -y mongodb-org 
+
+ 
+######## JDK7
+ 
+#Note that ADD uncompresses this tarball automatically
+ADD jdk-7u72-linux-x64.tar.gz /opt
+WORKDIR /opt/jdk1.7.0_72
+RUN alternatives --install /usr/bin/java java /opt/jdk1.7.0_72/bin/java 1
+RUN alternatives --install /usr/bin/jar jar /opt/jdk1.7.0_72/bin/jar 1
+RUN alternatives --install /usr/bin/javac javac /opt/jdk1.7.0_72/bin/javac 1
+RUN echo "JAVA_HOME=/opt/jdk1.7.0_72" >> /etc/environment
+ 
+######## TOMCAT
+ 
+#Note that ADD uncompresses this tarball automatically
+ADD apache-tomcat-7.0.76.tar.gz /usr/share
+WORKDIR /usr/share/
+RUN mv  apache-tomcat-7.0.76 tomcat7
+RUN echo "JAVA_HOME=/opt/jdk1.7.0_72/" >> /etc/default/tomcat7
+RUN groupadd tomcat
+RUN useradd -s /bin/bash -g tomcat tomcat
+RUN chown -Rf tomcat.tomcat /usr/share/tomcat7
+EXPOSE 8080
+
+
+#### Install python 2.7
+ADD Python-2.7.13.tgz  /opt
+RUN cd /opt/Python-2.7.13 && ./configure  && make altinstall
